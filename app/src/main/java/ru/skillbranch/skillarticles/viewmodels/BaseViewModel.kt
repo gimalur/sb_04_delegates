@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.UiThread
 import androidx.annotation.VisibleForTesting
+import androidx.core.os.bundleOf
 import androidx.lifecycle.*
+import androidx.savedstate.SavedStateRegistryOwner
 import java.io.Serializable
 
 abstract class BaseViewModel<T>(initState: T, private val savedStateHandle: SavedStateHandle) : ViewModel() where T : VMState {
@@ -108,13 +110,18 @@ abstract class BaseViewModel<T>(initState: T, private val savedStateHandle: Save
 
 }
 
-class ViewModelFactory(private val params: String) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+class ViewModelFactory(owner: SavedStateRegistryOwner, private val params: String) : AbstractSavedStateViewModelFactory(owner, bundleOf()) {
+    override fun <T : ViewModel?> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle
+    ): T {
         if (modelClass.isAssignableFrom(ArticleViewModel::class.java)) {
-            return ArticleViewModel(params) as T
+            return ArticleViewModel(params, handle) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
+
 }
 
 class Event<out E>(private val content: E) {
@@ -168,5 +175,5 @@ sealed class Notify() {
 
 public interface VMState : Serializable {
     fun toBundle(): Bundle
-    fun fromBundle(bundle: Bundle): VMState
+    fun fromBundle(bundle: Bundle): VMState?
 }
