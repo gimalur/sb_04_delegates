@@ -215,7 +215,7 @@ data class BottombarData(
     val isBookmark: Boolean = false, //в закладках
     val isShowMenu: Boolean = false, //отображается меню
     val isSearch: Boolean = false, //режим поиска
-    val resultCount: Int = 0,
+    val resultsCount: Int = 0,
     val searchPosition: Int = 0 //текущая позиция найденного результата
 )
 

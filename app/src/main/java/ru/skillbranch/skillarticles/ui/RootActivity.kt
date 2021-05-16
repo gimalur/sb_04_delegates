@@ -191,7 +191,7 @@ class RootActivity : AppCompatActivity(), IArticleView {
         }
 
         if (data.isSearch) {
-            showSearchBar(data.resultCount, data.searchPosition)
+            showSearchBar(data.resultsCount, data.searchPosition)
         } else {
             hideSearchBar()
         }
