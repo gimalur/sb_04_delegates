@@ -31,8 +31,8 @@ class PrefManager(context: Context = App.applicationContext()) {
 
     internal val scope = CoroutineScope(SupervisorJob() + errHandler)
 
-    val isBigText by PrefDelegate(false)
-    val isDarkMode by PrefDelegate(false)
+    var isBigText by PrefDelegate(false)
+    var isDarkMode by PrefDelegate(false)
 
     val settings: LiveData<AppSettings>
         get() {
