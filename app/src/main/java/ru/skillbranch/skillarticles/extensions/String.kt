@@ -6,7 +6,8 @@ fun String?.indexesOf(
 ): List<Int> {
     val NO_RESULT = -1
     val result = mutableListOf<Int>()
-    if (this == null) return result
+    if (substr.isEmpty()) return result
+    if (this.isNullOrEmpty()) return result
     var idx = 0
     while(idx != NO_RESULT) {
         idx = indexOf(substr, idx, ignoreCase)
