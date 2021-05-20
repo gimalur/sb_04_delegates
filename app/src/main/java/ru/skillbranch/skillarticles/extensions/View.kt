@@ -8,12 +8,16 @@ import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 
 fun View.setMarginOptionally(
-    left: Int = marginLeft,
-    top: Int = marginTop,
-    right: Int = marginRight,
-    bottom: Int = marginBottom
+    left:Int = marginLeft,
+    top : Int = marginTop,
+    right : Int = marginRight,
+    bottom : Int = marginBottom
 ){
-    val param = layoutParams as ViewGroup.MarginLayoutParams
-    param.setMargins(left, top, right, bottom)
-    layoutParams = param
+    (layoutParams as? ViewGroup.MarginLayoutParams)?.run{
+        leftMargin = left
+        rightMargin = right
+        topMargin = top
+        bottomMargin = bottom
+    }
+    requestLayout()
 }

@@ -1,8 +1,8 @@
 package ru.skillbranch.skillarticles.data.delegates
 
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -15,30 +15,42 @@ import kotlin.reflect.KProperty
 class PrefObjDelegate<T>(
     private val adapter: JsonAdapter<T>,
     private val customKey: String? = null
-) : ReadWriteProperty<PrefManager, T?> {
+) {
+    operator fun provideDelegate(
+        thisRef: PrefManager,
+        prop: KProperty<*>
+    ): ReadWriteProperty<PrefManager, T?> {
+        return object : ReadWriteProperty<PrefManager, T?> {
+            var storedValue: T? = null
 
-    private var _storedValue: T? = null
+            val key = stringPreferencesKey(customKey ?: prop.name)
 
-    override fun setValue(thisRef: PrefManager, property: KProperty<*>, value: T?) {
-        _storedValue = value
-        thisRef.scope.launch {
-            thisRef.dataStore.edit { prefs ->
-                prefs[keyName(property)] = value.let(adapter::toJson)
+            override fun getValue(thisRef: PrefManager, property: KProperty<*>): T? {
+                if (storedValue == null) {
+                    val flowValue = thisRef.dataStore.data.map { preferences ->
+                        preferences[key] ?: ""
+                    }
+                    storedValue = runBlocking {
+                        flowValue
+                            .map { adapter.fromJson(it) }
+                            .first()
+                    }
+                }
+                return storedValue
+            }
+
+            override fun setValue(thisRef: PrefManager, property: KProperty<*>, value: T?) {
+                storedValue = value
+                @Suppress("UNCHECKED_CAST")
+                thisRef.scope.launch {
+                    thisRef.dataStore.edit { settings ->
+                        settings[key] = adapter.toJson(value)
+                        Log.e("PrefManager", "set value ${adapter.toJson(value)}")
+                    }
+                }
             }
         }
     }
 
-    override fun getValue(thisRef: PrefManager, property: KProperty<*>): T? {
-        if (_storedValue == null) {
-            val flowValue = thisRef.dataStore.data
-                .map { prefs ->
-                    prefs[keyName(property)]?.let(adapter::fromJson)
-                }
-            _storedValue = runBlocking(Dispatchers.IO) { flowValue.first() }
-        }
-        return _storedValue
-    }
-
-    private fun keyName(property: KProperty<*>) = stringPreferencesKey(customKey ?: property.name)
 
 }

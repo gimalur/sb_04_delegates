@@ -15,7 +15,7 @@ interface IArticleRepository {
 class ArticleRepository(
     private val local: LocalDataHolder = LocalDataHolder,
     private val network: NetworkDataHolder = NetworkDataHolder,
-    private val prefs: PrefManager = PrefManager(),
+    private val prefs: PrefManager = PrefManager()
 ) : IArticleRepository {
 
     override fun loadArticleContent(articleId: String): LiveData<List<String>?> {
@@ -31,6 +31,7 @@ class ArticleRepository(
     }
 
     override fun getAppSettings(): LiveData<AppSettings> = prefs.settings //from preferences
+
     override fun updateSettings(appSettings: AppSettings) {
         prefs.isBigText = appSettings.isBigText
         prefs.isDarkMode = appSettings.isDarkMode

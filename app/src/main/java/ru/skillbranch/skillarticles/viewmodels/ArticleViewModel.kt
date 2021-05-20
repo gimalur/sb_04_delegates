@@ -2,6 +2,7 @@ package ru.skillbranch.skillarticles.viewmodels
 
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.core.os.bundleOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
@@ -15,14 +16,15 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
     private val repository = ArticleRepository()
 
     init {
-        // set custom saved state provider for non serializable or custom states
-        savedStateHandle.setSavedStateProvider(STATE_BUNDLE_KEY) {
+        //set custom saved state provider for non serializable or custom states
+        savedStateHandle.setSavedStateProvider("state"){
             currentState.toBundle()
         }
+
         //subscribe on mutable data
         subscribeOnDataSource(getArticleData()) { article, state ->
             article ?: return@subscribeOnDataSource null
-            Log.e("ArticleViewModel", "author: ${article.author}" );
+            Log.e("ArticleViewModel", "author: ${article.author}");
             state.copy(
                 shareLink = article.shareLink,
                 title = article.title,
@@ -33,23 +35,23 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
             )
         }
 
-        subscribeOnDataSource(getArticleContent()){ content, state ->
-            content ?: return@subscribeOnDataSource  null
+        subscribeOnDataSource(getArticleContent()) { content, state ->
+            content ?: return@subscribeOnDataSource null
             state.copy(
                 isLoadingContent = false,
                 content = content
             )
         }
 
-        subscribeOnDataSource(getArticlePersonalInfo()){ info, state ->
+        subscribeOnDataSource(getArticlePersonalInfo()) { info, state ->
             info ?: return@subscribeOnDataSource null
             state.copy(
-                isBookmark =  info.isBookmark,
+                isBookmark = info.isBookmark,
                 isLike = info.isLike
             )
         }
 
-        subscribeOnDataSource(repository.getAppSettings()){ settings, state ->
+        subscribeOnDataSource(repository.getAppSettings()) { settings, state ->
             state.copy(
                 isDarkMode = settings.isDarkMode,
                 isBigText = settings.isBigText
@@ -106,7 +108,7 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
 
         toggleLike()
 
-        val msg = if(!isLiked) Notify.TextMessage("Mark is liked")
+        val msg = if (!isLiked) Notify.TextMessage("Mark is liked")
         else {
             Notify.ActionMessage(
                 "Don`t like it anymore", //message
@@ -121,7 +123,7 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
 
     //not implemented
     override fun handleShare() {
-        val  msg = "Share is not implemented"
+        val msg = "Share is not implemented"
         notify(Notify.ErrorMessage(msg, "OK", null))
     }
 
@@ -137,17 +139,19 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
 
     override fun handleSearch(query: String?) {
         query ?: return
+
         val result = currentState.content.firstOrNull().indexesOf(query)
-            .map { it to it + query.length}
+            .map { it to it + query.length }
+
         updateState { it.copy(searchQuery = query, searchResults = result) }
     }
 
     override fun handleUpResult() {
-        updateState { it.copy(searchPosition = it.searchPosition.dec() ) }
+        updateState { it.copy(searchPosition = it.searchPosition.dec()) }
     }
 
     override fun handleDownResult() {
-        updateState { it.copy(searchPosition = it.searchPosition.inc() ) }
+        updateState { it.copy(searchPosition = it.searchPosition.inc()) }
     }
 }
 
@@ -179,10 +183,12 @@ data class ArticleState(
             .asMap()
             .toList()
             .toTypedArray()
+
         return bundleOf(*map)
     }
 
     override fun fromBundle(bundle: Bundle): ArticleState? {
+
         val map = bundle.keySet().associateWith { bundle[it] }
         return copy(
             isAuth = map["isAuth"] as Boolean,
@@ -205,7 +211,7 @@ data class ArticleState(
             author = map["author"] as Any?,
             poster = map["poster"] as String?,
             content = map["content"] as List<String>,
-            reviews = map["reviews"] as List<Any>
+            reviews = map["reviews"] as List<Any>,
         )
     }
 }
@@ -215,8 +221,8 @@ data class BottombarData(
     val isBookmark: Boolean = false, //в закладках
     val isShowMenu: Boolean = false, //отображается меню
     val isSearch: Boolean = false, //режим поиска
-    val resultsCount: Int = 0,
-    val searchPosition: Int = 0 //текущая позиция найденного результата
+    val resultsCount: Int = 0, //количество найденных вхождений
+    val searchPosition: Int = 0 //текущая позиция поиска
 )
 
 data class SubmenuData(

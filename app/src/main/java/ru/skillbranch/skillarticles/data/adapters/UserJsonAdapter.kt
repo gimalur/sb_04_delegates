@@ -6,26 +6,19 @@ import ru.skillbranch.skillarticles.extensions.asMap
 
 class UserJsonAdapter() : JsonAdapter<User>{
     override fun fromJson(json: String): User? {
-        val json = JSONObject(json)
-        return User(
-            id = json.getString("id"),
-            name = json.getString("name"),
-            avatar = json.optString("avatar"),
-            rating = json.getInt("rating"),
-            respect = json.getInt("respect"),
-            about = json.optString("about")
-        )
+        if (json.isEmpty()) return null
+        JSONObject(json).run {
+            val id = getString("id")
+            val name = getString("name")
+            val avatar = if (!isNull("avatar")) getString("avatar") else null
+            val rating = getInt("rating")
+            val respect = getInt("respect")
+            val about = if (!isNull("about")) getString("about") else null
+            return User(id, name, avatar, rating, respect, about)
+        }
     }
 
     override fun toJson(obj: User?): String {
-        val user = obj ?: return ""
-        return JSONObject().apply {
-            put("id", user.id)
-            put("name", user.name)
-            putOpt("avatar", user.avatar)
-            put("rating", user.rating)
-            put("respect", user.respect)
-            putOpt("about", user.about)
-        }.toString()
+        return obj?.let { JSONObject(it.asMap()).toString() } ?: ""
     }
 }
