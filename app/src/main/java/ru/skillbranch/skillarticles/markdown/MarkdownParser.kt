@@ -8,9 +8,10 @@ object MarkdownParser {
     // group regex
     private const val UNORDERED_LIST_ITEM_GROUP = "(^[*+-] .+$)"
     private const val HEADER_GROUP = "(^#{1,6} .+?$)"
+    private const val QUOTE_GROUP = "(^> .+?$)"
 
     //result regex
-    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP"
+    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP"
 
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
     /**
@@ -70,8 +71,8 @@ object MarkdownParser {
                     text = string.subSequence(startIndex.plus(2), endIndex)
 
                     //finds inner elements
-                    val subs = findElements(text)
-                    val element = Element.UnorderedListItem(text, subs)
+                    val subElements = findElements(text)
+                    val element = Element.UnorderedListItem(text, subElements)
                     parents.add(element)
 
                     // next find start from position "endIndex" (last regex character)
@@ -86,6 +87,16 @@ object MarkdownParser {
                     text = string.subSequence(startIndex.plus(level.inc()), endIndex)
 
                     val element = Element.Header(level, text)
+                    parents.add(element)
+                    lastStartIndex = endIndex
+                }
+                // QUOTE
+                3 -> {
+                    // text without "> "
+                    text = string.subSequence(startIndex.plus(2), endIndex)
+
+                    val subElements = findElements(text)
+                    val element = Element.Quote(text, subElements)
                     parents.add(element)
                     lastStartIndex = endIndex
                 }
