@@ -15,11 +15,13 @@ object MarkdownParser {
     private const val RULE_GROUP = "(^[-_*]{3}$)"
     private const val INLINE_GROUP = "((?<!`)`[^`\\s].*?[^`\\s]`(?!`))"
     private const val LINK_GROUP = "(\\[[^\\[\\]]*?]\\(.+?\\)|^\\[*?]\\(.*?\\))"
-    private const val ORDERED_LIST_ITEM_GROUP = "(^[\\d]*? .+$)"
+    private const val ORDERED_LIST_ITEM_GROUP = "(^\\d+\\. .+$)"
+    private const val IMAGE_GROUP = "(!\\[[^\\[\\]]*?]\\(.+?\\)|^!\\[*?]\\(.*?\\))"
 
     //result regex
     private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP" +
-            "|$ITALIC_GROUP|$BOLD_GROUP|$STRIKE_GROUP|$RULE_GROUP|$INLINE_GROUP|$LINK_GROUP"
+            "|$ITALIC_GROUP|$BOLD_GROUP|$STRIKE_GROUP|$RULE_GROUP|$INLINE_GROUP|$LINK_GROUP" +
+            "|$ORDERED_LIST_ITEM_GROUP|$IMAGE_GROUP"
 
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
     /**
@@ -61,7 +63,7 @@ object MarkdownParser {
             var text: CharSequence
 
             // groups range for iterate by groups
-            val groups = 1..9
+            val groups = 1..11
             var group = -1
             for (gr in groups) {
                 if (matcher.group(gr) != null) {
@@ -69,7 +71,6 @@ object MarkdownParser {
                     break
                 }
             }
-
             // Группы внутри регулярных выражений имеют нумерацию от 0 и до количества групп.
             // Где нулевая группа - это все выражение целиком (поэтому наш перебираемый range начинается с 1).
             when (group) {
@@ -165,6 +166,38 @@ object MarkdownParser {
 
                     val (title: String, link: String) = "\\[(.*)\\]\\((.*)\\)".toRegex().find(text)!!.destructured
                     val element = Element.Link(link, title)
+                    parents.add(element)
+                    lastStartIndex = endIndex
+                }
+                // ORDERED LIST
+                10 -> {
+                    // full text for regex
+                    text = string.subSequence(startIndex, endIndex)
+
+                    val (order: String, text1: String) = "([\\d]+\\.) (.+)".toRegex().find(text)!!.destructured
+                    val element = Element.OrderedListItem(order, text1)
+                    parents.add(element)
+                    lastStartIndex = endIndex
+                }
+                // IMAGE
+                11 -> {
+                    // full text for regex
+                    text = string.subSequence(startIndex.inc(), endIndex)
+
+                    val (altOrBlank: String, urlWithTitle: String) = "\\[(.*)\\]\\((.*)\\)".toRegex().find(text)!!.destructured
+                    var url = ""
+                    var title = ""
+                    val x = "(.*?) \"(.*?)\"".toRegex().find(urlWithTitle)
+                    if (x != null) {
+                        val d =  x.destructured
+                        url = d.component1()
+                        title = d.component2()
+                    } else {
+                        url = urlWithTitle
+                        title = ""
+                    }
+                    val alt = if (altOrBlank.isBlank()) null else altOrBlank
+                    val element = Element.Image(url, alt, title)
                     parents.add(element)
                     lastStartIndex = endIndex
                 }
@@ -275,7 +308,7 @@ sealed class Element {
     data class Image(
         val url: String,
         val alt: String?,
-        override val text: CharSequence,
+        override val text: CharSequence = " ", // for insert span
         override val elements: List<Element> = emptyList()
     ) : Element()
 
