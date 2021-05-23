@@ -17,11 +17,12 @@ object MarkdownParser {
     private const val LINK_GROUP = "(\\[[^\\[\\]]*?]\\(.+?\\)|^\\[*?]\\(.*?\\))"
     private const val ORDERED_LIST_ITEM_GROUP = "(^\\d+\\. .+$)"
     private const val IMAGE_GROUP = "(!\\[[^\\[\\]]*?]\\(.+?\\)|^!\\[*?]\\(.*?\\))"
+    private const val BLOCK_CODE_GROUP = "(^`{3}[^`][\\s\\S]*?[^`]`{3}(?!`))"
 
     //result regex
     private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP" +
             "|$ITALIC_GROUP|$BOLD_GROUP|$STRIKE_GROUP|$RULE_GROUP|$INLINE_GROUP|$LINK_GROUP" +
-            "|$ORDERED_LIST_ITEM_GROUP|$IMAGE_GROUP"
+            "|$ORDERED_LIST_ITEM_GROUP|$IMAGE_GROUP|$BLOCK_CODE_GROUP"
 
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
     /**
@@ -63,7 +64,7 @@ object MarkdownParser {
             var text: CharSequence
 
             // groups range for iterate by groups
-            val groups = 1..11
+            val groups = 1..12
             var group = -1
             for (gr in groups) {
                 if (matcher.group(gr) != null) {
@@ -201,6 +202,16 @@ object MarkdownParser {
                     parents.add(element)
                     lastStartIndex = endIndex
                 }
+                // BLOCK CODE
+                12 -> {
+                    // text without "```{}```}`"
+                    text = string.subSequence(startIndex.plus(3), endIndex.minus(3))
+
+                    val subElements = findElements(text)
+                    val element = Element.BlockCode(text, subElements)
+                    parents.add(element)
+                    lastStartIndex = endIndex
+                }
             }
         }
 
@@ -291,12 +302,9 @@ sealed class Element {
     multiline code block```
      */
     data class BlockCode(
-        val type: Type = Type.MIDDLE,
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ) : Element() {
-        enum class Type {START, END, MIDDLE, SINGLE }
-    }
+    ) : Element()
 
     /**
      из markdown разметки:
