@@ -40,7 +40,33 @@ object MarkdownParser {
     fun clear(string: String?): String? {
         // метод принимает строку содержащую markdown разметку и должен вернуть строку без markdown
         // специфичных символов (понадобится в дальнейшем для реализации поиска по тексту)
-        return null
+        return string?.let { input ->
+            parse(input).elements.spread().joinToString("") {
+                when (it) {
+                    is Element.Text,
+                    is Element.OrderedListItem,
+                    is Element.Link,
+                    is Element.Rule,
+                    is Element.Header -> it.text
+                    else -> ""
+                }
+            }
+        }
+    }
+
+    private fun Element.spread():List<Element>{
+        val elements = mutableListOf<Element>()
+        elements.add(this)
+        elements.addAll(this.elements.spread())
+        return elements
+    }
+
+    private fun List<Element>.spread():List<Element>{
+        val elements = mutableListOf<Element>()
+        if(this.isNotEmpty()) elements.addAll(
+            this.fold(mutableListOf()){acc, el -> acc.also { it.addAll(el.spread()) }}
+        )
+        return elements
     }
 
     /**
