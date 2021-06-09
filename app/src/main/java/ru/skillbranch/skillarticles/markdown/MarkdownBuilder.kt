@@ -28,13 +28,24 @@ class MarkdownBuilder(context: Context) {
     private val headerMarginBottom = context.dpToPx(8)
     private val ruleWidth = context.dpToPx(2)
     private val cornerRadius = context.dpToPx(8)
-    private val linkIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_link_24)!!
+    private val linkIcon = ContextCompat.getDrawable(context, R.drawable.logo)!!
+//    private val linkIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_link_24)!!
 
-    fun markdownToSpan(string: String): SpannedString {
-        //TODO implement me
+    fun markdownToSpan(content: String): SpannedString {
+        val markdown = MarkdownParser.parse(content)
+        return buildSpannedString {
+            markdown.elements.forEach { buildElement(it, this) }
+        }
     }
 
     private fun buildElement(element: Element, builder: SpannableStringBuilder): CharSequence {
-        //TODO implement me
+        return builder.apply {
+            when (element) {
+                is Element.Text -> append(element.text)
+
+
+                else -> append(element.text)
+            }
+        }
     }
 }

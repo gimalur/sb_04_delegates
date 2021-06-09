@@ -39,6 +39,7 @@ class UnderlineSpan(
         fm: Paint.FontMetricsInt?
     ): Int {
         //TODO implement me
+        return 0
     }
 
 
