@@ -43,6 +43,16 @@ class MarkdownBuilder(context: Context) {
             when (element) {
                 is Element.Text -> append(element.text)
 
+                is Element.Quote -> {
+                    inSpans(
+                        BlockquotesSpan(gap, strikeWidth, colorSecondary),
+                        StyleSpan(Typeface.ITALIC)
+                    ) {
+                        for (child in element.elements) {
+                            buildElement(child, builder)
+                        }
+                    }
+                }
 
                 else -> append(element.text)
             }
