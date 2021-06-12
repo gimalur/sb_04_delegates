@@ -1,9 +1,6 @@
 package ru.skillbranch.skillarticles.markdown.spans
 
-import android.graphics.Canvas
-import android.graphics.DashPathEffect
-import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.text.style.ReplacementSpan
 import androidx.annotation.ColorInt
@@ -37,7 +34,24 @@ class IconLinkSpan(
         bottom: Int,
         paint: Paint
     ) {
-        //TODO implement me
+        val textStart = x + iconSize + padding
+
+        paint.forLine {
+            path.reset()
+            path.moveTo(textStart, bottom.toFloat())
+            path.lineTo(textStart + textWidth, bottom.toFloat())
+            canvas.drawPath(path, paint)
+        }
+
+        canvas.save() // save canvas position
+        val transY = (bottom - linkDrawable.bounds.bottom.toFloat()) // translate icon to line position
+        canvas.translate(x + padding / 2f, transY)
+        linkDrawable.draw(canvas)
+        canvas.restore()
+
+        paint.forText {
+            canvas.drawText(text, start, end, textStart, y.toFloat(), paint)
+        }
     }
 
 
@@ -48,16 +62,39 @@ class IconLinkSpan(
         end: Int,
         fm: Paint.FontMetricsInt?
     ): Int {
-        //TODO implement me
-        return 0
+        if (fm != null) {
+            iconSize = fm.descent - fm.ascent
+        }
+        if (iconSize != 0) {
+            linkDrawable.setBounds(0, 0, iconSize, iconSize)
+            textWidth = paint.measureText(text.toString(), start, end)
+        }
+        return (iconSize + padding + textWidth).toInt()
     }
 
 
     private inline fun Paint.forLine(block: () -> Unit) {
-        //TODO implement me
+        val oldStyle = style
+        val oldWidth = strokeWidth
+
+        strokeWidth = 0f
+        style = Paint.Style.STROKE
+        pathEffect = dashs
+        color = textColor
+
+        block()
+
+        pathEffect = null
+        strokeWidth = oldWidth
+        style = oldStyle
     }
 
     private inline fun Paint.forText(block: () -> Unit) {
-        //TODO implement me
+        val oldColor = color
+        color = textColor
+
+        block()
+
+        color = oldColor
     }
 }
