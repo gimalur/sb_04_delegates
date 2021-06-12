@@ -43,6 +43,14 @@ class MarkdownBuilder(context: Context) {
             when (element) {
                 is Element.Text -> append(element.text)
 
+                is Element.UnorderedListItem -> {
+                    inSpans(UnorderedListSpan(gap, bulletRadius, colorSecondary)) {
+                        for (child in element.elements) {
+                            buildElement(child, builder)
+                        }
+                    }
+                }
+
                 is Element.Quote -> {
                     inSpans(
                         BlockquotesSpan(gap, strikeWidth, colorSecondary),
@@ -51,6 +59,72 @@ class MarkdownBuilder(context: Context) {
                         for (child in element.elements) {
                             buildElement(child, builder)
                         }
+                    }
+                }
+
+                is Element.Header -> {
+                    inSpans(
+                        HeaderSpan(
+                            element.level,
+                            colorPrimary,
+                            colorDivider,
+                            headerMarginTop,
+                            headerMarginBottom
+                        )
+                    ) {
+                        append(element.text)
+                    }
+                }
+
+                is Element.Italic -> {
+                    inSpans(StyleSpan(Typeface.ITALIC)) {
+                        for (child in element.elements) {
+                            buildElement(child, builder)
+                        }
+                    }
+                }
+
+                is Element.Bold -> {
+                    inSpans(StyleSpan(Typeface.BOLD)) {
+                        for (child in element.elements) {
+                            buildElement(child, builder)
+                        }
+                    }
+                }
+
+                is Element.Strike -> {
+                    inSpans(StrikethroughSpan()) {
+                        for (child in element.elements) {
+                            buildElement(child, builder)
+                        }
+                    }
+                }
+
+                is Element.InlineCode -> {
+                    inSpans(
+                        InlineCodeSpan(
+                            colorOnSurface,
+                            opacityColorSurface,
+                            cornerRadius,
+                            gap
+                        )
+                    ) {
+                        append(element.text)
+                    }
+                }
+
+
+                is Element.Link -> {
+                    inSpans(
+                        IconLinkSpan(
+                            linkIcon,
+                            gap,
+                            colorPrimary,
+                            strikeWidth
+                        ),
+                        URLSpan(element.link)
+                    ) {
+                        append(element.text)
                     }
                 }
 
