@@ -33,6 +33,7 @@ class UnderlineSpan(
             path.lineTo(x + textWidth, bottom.toFloat())
             canvas.drawPath(path, paint)
         }
+        canvas.drawText(text, start, end, 0f, y.toFloat(), paint)
     }
 
 
@@ -51,6 +52,7 @@ class UnderlineSpan(
     private inline fun Paint.forLine(block: () -> Unit) {
         val oldStyle = style
         val oldWidth = strokeWidth
+        val oldColor = color
 
         pathEffect = dashs
         color = underlineColor
@@ -62,5 +64,6 @@ class UnderlineSpan(
         pathEffect = null
         strokeWidth = oldWidth
         style = oldStyle
+        color = oldColor
     }
 }
